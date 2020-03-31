@@ -1,19 +1,19 @@
-import { withConn } from './db.js';
+import { withConn } from '../db.js';
 
-import * as profile from './models/profile.js';
+import * as profile from '../models/profile.js';
 
 //
 // The endpoint are:
 //
-// List     http://localhost:3000/profile
-// Details  http://localhost:3000/profile/pdm
+// List     http://localhost:3000/api/profile
+// Details  http://localhost:3000/api/profile/pdm
 //
 
 export default (router) => {
-    // Route path: /profile
+    // Route path: /
     // Request URL: http://localhost:3000/api/profile
     // req.params: { }
-    router.get('/profile', (req, res) => {
+    router.get('/', (req, res) => {
         withConn(res, async (conn) => {
             const profiles = await profile.getProfiles(conn);
 
@@ -21,10 +21,10 @@ export default (router) => {
         });
     });
 
-    // Route path: /profile/:username
+    // Route path: /:username
     // Request URL: http://localhost:3000/api/profile/pdm
-    // req.params: { "id": "pdm" }
-    router.get('/profile/:username', async (req, res) => {
+    // req.params: { "username": "pdm" }
+    router.get('/:username', async (req, res) => {
         withConn(res, async (conn) => {
             const { username } = req.params;
 

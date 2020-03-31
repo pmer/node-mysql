@@ -1,6 +1,6 @@
 import express from 'express';
 
-import setupApi from './api.js';
+import setupApi from './routes/index.js';
 
 const app = express();
 const api = express.Router();
