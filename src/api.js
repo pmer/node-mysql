@@ -1,41 +1,41 @@
 import { withConn } from './db.js';
 
-import * as people from './models/person.js';
+import * as profile from './models/profile.js';
 
 //
 // The endpoint are:
 //
-// List     http://localhost:3000/person
-// Details  http://localhost:3000/person/2
+// List     http://localhost:3000/profile
+// Details  http://localhost:3000/profile/pdm
 //
 
 export default (router) => {
-    // Route path: /person
-    // Request URL: http://localhost:3000/api/person
+    // Route path: /profile
+    // Request URL: http://localhost:3000/api/profile
     // req.params: { }
-    router.get('/person', (req, res) => {
+    router.get('/profile', (req, res) => {
         withConn(res, async (conn) => {
-            const people = await people.getPeople(conn);
+            const profiles = await profile.getProfiles(conn);
 
-            res.json({ people });
+            res.json({ profiles });
         });
     });
 
-    // Route path: /person/:id
-    // Request URL: http://localhost:3000/api/person/2
-    // req.params: { "id": 2 }
-    router.get('/person/:id(\\d+)', async (req, res) => {
+    // Route path: /profile/:username
+    // Request URL: http://localhost:3000/api/profile/pdm
+    // req.params: { "id": "pdm" }
+    router.get('/profile/:username', async (req, res) => {
         withConn(res, async (conn) => {
-            const { id } = req.params;
+            const { username } = req.params;
 
-            const person = await people.getPerson(conn, id);
+            const prof = await profile.getProfileByUsername(conn, username);
 
-            if (person === null) {
+            if (prof === null) {
                 res.sendStatus(404);
                 return;
             }
 
-            res.json({ person });
+            res.json({ profile: prof });
         });
     });
 };
