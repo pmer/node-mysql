@@ -1,5 +1,29 @@
 import SQL from 'sql-template-strings';
 
+export function isUsernameValid(value) {
+    return typeof value === 'string' &&
+        1 <= value.length &&
+        value.length <= 300;
+}
+
+export function isPasswordValid(value) {
+    return typeof value === 'string' &&
+        0 <= value.length &&
+        value.length <= 128;
+}
+
+export function isBodyValid(value) {
+    return typeof value === 'string' &&
+        0 <= value.length &&
+        value.length <= 10000;
+}
+
+export function isDescriptionValid(value) {
+    return typeof value === 'string' &&
+        0 <= value.length &&
+        value.length <= 3000;
+}
+
 export async function getProfiles(conn) {
     const sql = SQL`SELECT * FROM profile`;
     const { results } = await conn.query(sql);
@@ -19,4 +43,17 @@ export async function getProfileByUsername(conn, username) {
 
     const profile = results[0];
     return profile;
+}
+
+export async function createProfile(conn, profile) {
+    const { username, password, created, updated, body, description } = profile;
+
+    const sql = SQL`INSERT
+        INTO profile
+        (username, password, created, updated, body, description)
+        VALUES
+        (${username}, ${password}, ${created}, ${updated}, ${body},
+         ${description})`;
+
+    await conn.query(sql);
 }

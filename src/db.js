@@ -5,8 +5,15 @@ const mysqlConfiguration = {
     user: 'root',
     database: 'test',
 
+    charset: 'utf8mb4',
     multipleStatements: true,
 };
+
+// Error: ER_DUP_ENTRY
+// Example: Inserting a row into a table with a primary key already in use.
+// Documentation:
+//     https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_dup_entry
+export const ERR_MYSQL_DUP_ENTRY = 'ER_DUP_ENTRY';
 
 class Conn {
     static makeConn() {

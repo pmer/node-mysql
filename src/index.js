@@ -10,13 +10,6 @@ const api = express.Router();
 //
 app.use('/api', api);
 
-function log(req, res, next) {
-    const { method, path } = req;
-    console.log(`${method} ${path}`);
-    next();
-}
-api.use(log);
-
 setupApi(api);
 
 //
