@@ -49,6 +49,7 @@ CREATE TABLE option_tag (
 CREATE TABLE profile (
     username      VARCHAR(300) NOT NULL,
     password      CHAR(128),
+    salt          CHAR(32),
     created       DATE NOT NULL,
     updated       DATE NOT NULL,
     body          VARCHAR(10000) NOT NULL,

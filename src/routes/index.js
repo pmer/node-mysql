@@ -16,8 +16,12 @@ function setupRoutes(router) {
     router.use(bodyParser.urlencoded({ extended: false }));
 
     const profile = express.Router();
+    const login = express.Router();
+
     router.use('/profile', profile);
-    setupProfile(profile);
+    router.use('/login', login);
+
+    setupProfile({ profile, login });
 }
 
 export default setupRoutes;
