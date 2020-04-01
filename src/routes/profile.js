@@ -1,3 +1,4 @@
+import * as auth from '../auth.js';
 import { ERR_MYSQL_DUP_ENTRY, withConn } from '../db.js';
 import * as password from '../password.js';
 
@@ -9,17 +10,15 @@ import * as profile from '../models/profile.js';
 // List     GET  http://localhost:3000/api/profile
 // Details  GET  http://localhost:3000/api/profile/pdm
 // Create   POST http://localhost:3000/api/profile
+// Modify   PUT  http://localhost:3000/api/profile
 // Login    POST http://localhost:3000/api/login
 //
-
-const CURRENT_DATE = {
-    toSqlString: () => 'CURRENT_DATE()',
-};
 
 export default (routers) => {
     // Route method: GET
     // Route path: /profile
     // Request URL: http://localhost:3000/api/profile
+    //
     // req.params: { }
     routers.profile.get('/', (req, res) => {
         withConn(res, async (conn) => {
@@ -32,6 +31,7 @@ export default (routers) => {
     // Route method: GET
     // Route path: /profile/:username
     // Request URL: http://localhost:3000/api/profile/pdm
+    //
     // req.params: {
     //     "username": "pdm"
     // }
@@ -40,7 +40,6 @@ export default (routers) => {
             const { username } = req.params;
 
             const prof = await profile.getProfileByUsername(conn, username);
-
             if (prof === null) {
                 res.sendStatus(404);
                 return;
@@ -53,6 +52,7 @@ export default (routers) => {
     // Route method: POST
     // Route path: /profile
     // Request URL: http://localhost:3000/api/profile
+    //
     // req.body: {
     //     "username": "ammc",
     //     "password": "password",
@@ -68,7 +68,6 @@ export default (routers) => {
                 !password.isPasswordValid(pw) ||
                 !profile.isBodyValid(body) ||
                 !profile.isDescriptionValid(description);
-
             if (invalid) {
                 res.status(400).send('Invalid request parameters');
                 return;
@@ -82,8 +81,6 @@ export default (routers) => {
                     username,
                     password: hash.toString('hex'),
                     salt: salt.toString('hex'),
-                    created: CURRENT_DATE,
-                    updated: CURRENT_DATE,
                     body,
                     description,
                 });
@@ -100,9 +97,67 @@ export default (routers) => {
         });
     });
 
+    // Route method: PUT
+    // Route path: /profile
+    // Request URL: http://localhost:3000/api/profile
+    //
+    // req.headers.authorization: "Bearer a.b.c"
+    // req.body: {
+    //     "password": "my new password",
+    //     "body": "my new body",
+    //     "description": "my new description"
+    // }
+    routers.profile.put('/', async (req, res) => {
+        withConn(res, async (conn) => {
+            const { password: pw, body, description } = req.body;
+
+            const valid =
+                (pw === undefined || password.isPasswordValid(pw)) &&
+                (body === undefined || profile.isBodyValid(body)) &&
+                (description === undefined || profile.isDescriptionValid(description));
+            if (!valid) {
+                res.status(400).send('Invalid request parameters');
+                return;
+            }
+
+            const payload = await auth.verifyRequestJWT(req);
+            if (payload === null) {
+                res.status(400).send('Invalid authorization');
+                return;
+            }
+
+            const { username } = payload;
+
+            const prof = await profile.getProfileByUsername(conn, username);
+            if (prof === null) {
+                res.status(500).send('Unknown profile');
+                return;
+            }
+
+            if (pw !== undefined) {
+                const salt = Buffer.from(prof.salt, 'hex');
+                const hash = await password.hashPassword(pw, salt);
+                prof.password = hash.toString('hex');
+            }
+
+            if (body !== undefined) {
+                prof.body = body;
+            }
+
+            if (description !== undefined) {
+                prof.description = description;
+            }
+
+            await profile.updateProfile(conn, prof);
+
+            res.json({ profile: prof });
+        });
+    });
+
     // Route method: POST
     // Route path: /login
     // Request URL: http://localhost:3000/api/login
+    //
     // req.body: {
     //     "username": "ammc",
     //     "password": "password"
@@ -114,7 +169,6 @@ export default (routers) => {
             const invalid =
                 !profile.isUsernameValid(username) ||
                 !password.isPasswordValid(pw);
-
             if (invalid) {
                 res.status(400).send('Invalid request parameters');
                 return;
@@ -135,7 +189,9 @@ export default (routers) => {
                 return;
             }
 
-            res.send('OK');
+            const token = await auth.signJWT({ username });
+
+            res.send(token);
         });
     });
 };

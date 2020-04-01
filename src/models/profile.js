@@ -25,6 +25,10 @@ export async function getProfiles(conn) {
     return profiles;
 }
 
+const CURRENT_DATE = {
+    toSqlString: () => 'CURRENT_DATE()',
+};
+
 export async function getProfileByUsername(conn, username) {
     const sql = SQL`SELECT * FROM profile WHERE username = ${username}`;
     const { results } = await conn.query(sql);
@@ -43,11 +47,12 @@ export async function createProfile(conn, profile) {
         username,
         password,
         salt,
-        created,
-        updated,
         body,
-        description
+        description,
     } = profile;
+
+    const created = CURRENT_DATE;
+    const updated = CURRENT_DATE;
 
     const sql = SQL`INSERT
         INTO profile
@@ -55,6 +60,26 @@ export async function createProfile(conn, profile) {
         VALUES
         (${username}, ${password}, ${salt}, ${created}, ${updated}, ${body},
          ${description})`;
+
+    await conn.query(sql);
+}
+
+export async function updateProfile(conn, profile) {
+    const {
+        username,
+        password,
+        body,
+        description,
+    } = profile;
+
+    const updated = CURRENT_DATE;
+
+    const sql = SQL`UPDATE profile
+        SET password = ${password},
+            body = ${body},
+            updated = ${updated},
+            description = ${description}
+        WHERE username = ${username}`;
 
     await conn.query(sql);
 }

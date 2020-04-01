@@ -15,6 +15,28 @@ const mysqlConfiguration = {
 //     https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_dup_entry
 export const ERR_MYSQL_DUP_ENTRY = 'ER_DUP_ENTRY';
 
+function stringify(query) {
+    if (typeof query === 'string') {
+        return query;
+    }
+
+    if (query.strings !== undefined) {
+        // SQLStatement object from the sql-template-strings package.
+        const { strings, values } = query;
+
+        function collapse(s) {
+            return s.replace(/\s\s+/g, ' ');
+        }
+
+        return strings.reduce((prev, curr, i) => {
+            return collapse(prev) + mysql.escape(values[i-1]) + collapse(curr);
+        });
+    }
+
+    // ???
+    return query;
+}
+
 class Conn {
     static makeConn() {
         return new Promise((resolve, reject) => {
@@ -41,6 +63,7 @@ class Conn {
 
     query(options) {
         return new Promise((resolve, reject) => {
+            console.log(stringify(options));
             this.connection.query(options, (err, results, fields) => {
                 if (err) {
                     reject(err);
@@ -111,8 +134,7 @@ async function migrate() {
             const buffer = await fs.readFile(file);
             const content = buffer.toString('utf-8');
 
-            console.log(content);
-
+            // `content` is logged.
             await conn.query(content);
         }
     }
